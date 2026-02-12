@@ -89,7 +89,8 @@ export function getAuthHeaders(token: string): Record<string, string> {
  * Starts the OAuth2 login flow.
  */
 export async function startOAuthLogin(clientId: string, clientSecret: string): Promise<void> {
-  const state = Math.random().toString(36).substring(2, 15);
+  const { randomBytes } = await import('node:crypto');
+  const state = randomBytes(32).toString('hex');
 
   const authUrl = new URL(GOOGLE_AUTH_URL);
   authUrl.searchParams.set('client_id', clientId);

@@ -158,7 +158,6 @@ All data-returning commands support `--output` / `-o`:
 
 Additional flags:
 - `--quiet` / `-q` — suppress non-essential output
-- `--verbose` / `-v` — debug logging
 
 ## Configuration
 
