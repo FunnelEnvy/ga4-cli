@@ -1,7 +1,7 @@
 # ga4-cli
 
-[![npm version](https://img.shields.io/npm/v/@marketing-clis/ga4-cli.svg)](https://www.npmjs.com/package/@marketing-clis/ga4-cli)
-[![CI](https://github.com/marketing-clis/ga4-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/marketing-clis/ga4-cli/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@funnelenvy/ga4-cli.svg)](https://www.npmjs.com/package/@funnelenvy/ga4-cli)
+[![CI](https://github.com/FunnelEnvy/ga4-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/FunnelEnvy/ga4-cli/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Command-line interface for Google Analytics 4 — run reports, manage properties, and query realtime data from your terminal.
@@ -9,7 +9,7 @@ Command-line interface for Google Analytics 4 — run reports, manage properties
 ## Install
 
 ```bash
-npm install -g @marketing-clis/ga4-cli
+npm install -g @funnelenvy/ga4-cli
 ```
 
 ## Quick Start
@@ -183,7 +183,7 @@ Config file location: `~/.config/ga4-cli/config.json`
 ## Development
 
 ```bash
-git clone https://github.com/marketing-clis/ga4-cli.git
+git clone https://github.com/FunnelEnvy/ga4-cli.git
 cd ga4-cli
 pnpm install
 pnpm run build
@@ -194,7 +194,7 @@ pnpm run lint
 
 ## Part of Marketing CLIs
 
-This tool is part of [Marketing CLIs](https://github.com/marketing-clis/marketing-clis) — open source CLIs for marketing tools that lack them. All CLIs share consistent auth, output formatting, and error handling patterns.
+This tool is part of [Marketing CLIs](https://github.com/FunnelEnvy/marketing-clis) — open source CLIs for marketing tools that lack them. All CLIs share consistent auth, output formatting, and error handling patterns.
 
 ## License
 
