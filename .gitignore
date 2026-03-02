@@ -9,3 +9,4 @@ coverage/
 
 .idea/
 bun.lock
+pnpm-lock.yaml
