@@ -21,7 +21,7 @@ ga4 properties get --property-id <id> [-o json|table|csv]
 ### Reports (Data API)
 
 ```
-ga4 reports run --property-id <id> --metrics <m1,m2> --start-date <date> --end-date <date> [--dimensions <d1,d2>] [--limit <n>] [--offset <n>] [--order-by <field>] [-o json|table|csv]
+ga4 reports run --property-id <id> --metrics <m1,m2> --start-date <date> --end-date <date> [--dimensions <d1,d2>] [--limit <n>] [--offset <n>] [--order-by <field>] [--dimension-filter <json>] [--metric-filter <json>] [--include-metadata] [-o json|table|csv]
 ```
 
 ### Realtime Reports (Data API)
@@ -91,6 +91,19 @@ ga4 reports run \
   --output table
 ```
 
+### Run a filtered report (page path + event)
+
+```bash
+ga4 reports run \
+  --property-id 123456 \
+  --metrics eventCount \
+  --dimensions date \
+  --start-date 30daysAgo \
+  --end-date yesterday \
+  --dimension-filter '{"andGroup": {"expressions": [{"filter": {"fieldName": "pagePath", "stringFilter": {"matchType": "CONTAINS", "value": "/pricing"}}}, {"filter": {"fieldName": "eventName", "stringFilter": {"matchType": "EXACT", "value": "form_submit"}}}]}}' \
+  --include-metadata -q
+```
+
 ### Check realtime active users by country
 
 ```bash
@@ -138,6 +151,28 @@ All commands return arrays of flat objects:
 ```
 
 Report values are always strings (GA4 API returns strings for all values).
+
+### JSON output with `--include-metadata`
+
+When `--include-metadata` is passed to `reports run`, output wraps rows with metadata:
+
+```json
+{
+  "rows": [
+    {"city": "New York", "activeUsers": "1234"}
+  ],
+  "metadata": {
+    "currencyCode": "USD",
+    "timeZone": "America/New_York",
+    "samplingMetadatas": [
+      {"samplesReadCount": "500000", "samplingSpaceSize": "1000000"}
+    ]
+  },
+  "rowCount": 1
+}
+```
+
+Use this when you need sampling information (e.g., MDE calculator workflows).
 
 ### Properties list JSON
 

@@ -31,6 +31,11 @@ interface RunReportResponse {
   metadata: {
     currencyCode?: string;
     timeZone?: string;
+    samplingMetadatas?: Array<{
+      samplesReadCount: string;
+      samplingSpaceSize: string;
+    }>;
+    dataLossFromOtherRow?: boolean;
   };
 }
 
@@ -50,6 +55,9 @@ export function registerReportsCommands(program: Command): void {
     .option('--limit <n>', 'Maximum number of rows to return', '100')
     .option('--offset <n>', 'Row offset for pagination', '0')
     .option('--order-by <field>', 'Field to order by (prefix with "-" for descending)')
+    .option('--dimension-filter <json>', 'Dimension filter as JSON (GA4 REST API format)')
+    .option('--metric-filter <json>', 'Metric filter as JSON (GA4 REST API format)')
+    .option('--include-metadata', 'Include metadata envelope in output (rows, metadata, rowCount)')
     .option('--access-token <token>', 'Access token for authentication')
     .option('-o, --output <format>', 'Output format (json, table, csv)', 'json')
     .option('-q, --quiet', 'Suppress non-essential output')
@@ -76,6 +84,24 @@ export function registerReportsCommands(program: Command): void {
           limit: parseInt(options.limit),
           offset: parseInt(options.offset),
         };
+
+        if (options.dimensionFilter) {
+          try {
+            body.dimensionFilter = JSON.parse(options.dimensionFilter);
+          } catch {
+            console.error('Error: --dimension-filter must be valid JSON');
+            process.exit(1);
+          }
+        }
+
+        if (options.metricFilter) {
+          try {
+            body.metricFilter = JSON.parse(options.metricFilter);
+          } catch {
+            console.error('Error: --metric-filter must be valid JSON');
+            process.exit(1);
+          }
+        }
 
         if (options.orderBy) {
           const desc = options.orderBy.startsWith('-');
@@ -120,7 +146,14 @@ export function registerReportsCommands(program: Command): void {
           console.error(`Rows returned: ${rows.length} (total: ${data.rowCount ?? rows.length})`);
         }
 
-        printOutput(rows, format);
+        if (options.includeMetadata) {
+          printOutput(
+            { rows, metadata: data.metadata ?? {}, rowCount: data.rowCount ?? rows.length },
+            format,
+          );
+        } else {
+          printOutput(rows, format);
+        }
       } catch (error) {
         if (error instanceof HttpError) {
           printError(

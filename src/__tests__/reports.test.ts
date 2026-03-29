@@ -144,6 +144,169 @@ describe('reports commands', () => {
       ).rejects.toThrow(HttpError);
     });
 
+    it('passes dimension filter through to API request body', async () => {
+      const dimensionFilter = {
+        filter: {
+          fieldName: 'pagePath',
+          stringFilter: { matchType: 'CONTAINS', value: '/pricing', caseSensitive: false },
+        },
+      };
+
+      const mockResponse = {
+        dimensionHeaders: [{ name: 'pagePath' }],
+        metricHeaders: [{ name: 'totalUsers', type: 'TYPE_INTEGER' }],
+        rows: [
+          {
+            dimensionValues: [{ value: '/www.example.com/pricing' }],
+            metricValues: [{ value: '500' }],
+          },
+        ],
+        rowCount: 1,
+        metadata: {},
+      };
+
+      const scope = nock(DATA_API_BASE)
+        .post('/v1beta/properties/123456:runReport', (body) => {
+          return (
+            body.dimensionFilter?.filter?.fieldName === 'pagePath' &&
+            body.dimensionFilter?.filter?.stringFilter?.matchType === 'CONTAINS'
+          );
+        })
+        .reply(200, mockResponse);
+
+      const { request } = await import('../lib/http.js');
+      const data = await request<typeof mockResponse>(
+        `${DATA_API_BASE}/v1beta/properties/123456:runReport`,
+        {
+          method: 'POST',
+          headers: { Authorization: 'Bearer test-token-123' },
+          body: {
+            metrics: [{ name: 'totalUsers' }],
+            dimensions: [{ name: 'pagePath' }],
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensionFilter,
+            limit: 100,
+            offset: 0,
+          },
+        },
+      );
+
+      expect(data.rows).toHaveLength(1);
+      expect(data.rows[0].dimensionValues[0].value).toBe('/www.example.com/pricing');
+      expect(scope.isDone()).toBe(true);
+    });
+
+    it('passes and_group dimension filter through to API', async () => {
+      const dimensionFilter = {
+        andGroup: {
+          expressions: [
+            {
+              filter: {
+                fieldName: 'pagePath',
+                stringFilter: { matchType: 'CONTAINS', value: '/pricing' },
+              },
+            },
+            {
+              filter: {
+                fieldName: 'eventName',
+                stringFilter: { matchType: 'EXACT', value: 'form_submit' },
+              },
+            },
+          ],
+        },
+      };
+
+      const mockResponse = {
+        dimensionHeaders: [{ name: 'date' }],
+        metricHeaders: [{ name: 'eventCount', type: 'TYPE_INTEGER' }],
+        rows: [
+          {
+            dimensionValues: [{ value: '20240115' }],
+            metricValues: [{ value: '12' }],
+          },
+        ],
+        rowCount: 1,
+        metadata: {},
+      };
+
+      const scope = nock(DATA_API_BASE)
+        .post('/v1beta/properties/123456:runReport', (body) => {
+          return (
+            body.dimensionFilter?.andGroup?.expressions?.length === 2 &&
+            body.dimensionFilter.andGroup.expressions[0].filter.fieldName === 'pagePath' &&
+            body.dimensionFilter.andGroup.expressions[1].filter.fieldName === 'eventName'
+          );
+        })
+        .reply(200, mockResponse);
+
+      const { request } = await import('../lib/http.js');
+      const data = await request<typeof mockResponse>(
+        `${DATA_API_BASE}/v1beta/properties/123456:runReport`,
+        {
+          method: 'POST',
+          headers: { Authorization: 'Bearer test-token-123' },
+          body: {
+            metrics: [{ name: 'eventCount' }],
+            dimensions: [{ name: 'date' }],
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensionFilter,
+            limit: 100,
+            offset: 0,
+          },
+        },
+      );
+
+      expect(data.rows).toHaveLength(1);
+      expect(scope.isDone()).toBe(true);
+    });
+
+    it('returns metadata envelope when include-metadata is used', async () => {
+      const mockResponse = {
+        dimensionHeaders: [{ name: 'date' }],
+        metricHeaders: [{ name: 'totalUsers', type: 'TYPE_INTEGER' }],
+        rows: [
+          {
+            dimensionValues: [{ value: '20240115' }],
+            metricValues: [{ value: '250' }],
+          },
+        ],
+        rowCount: 1,
+        metadata: {
+          currencyCode: 'USD',
+          timeZone: 'America/New_York',
+          samplingMetadatas: [
+            { samplesReadCount: '500000', samplingSpaceSize: '1000000' },
+          ],
+        },
+      };
+
+      const scope = nock(DATA_API_BASE)
+        .post('/v1beta/properties/123456:runReport')
+        .reply(200, mockResponse);
+
+      const { request } = await import('../lib/http.js');
+      const data = await request<typeof mockResponse>(
+        `${DATA_API_BASE}/v1beta/properties/123456:runReport`,
+        {
+          method: 'POST',
+          headers: { Authorization: 'Bearer test-token-123' },
+          body: {
+            metrics: [{ name: 'totalUsers' }],
+            dimensions: [{ name: 'date' }],
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            limit: 100,
+            offset: 0,
+          },
+        },
+      );
+
+      // Verify sampling metadata is present in response
+      expect(data.metadata.samplingMetadatas).toHaveLength(1);
+      expect(data.metadata.samplingMetadatas![0].samplesReadCount).toBe('500000');
+      expect(data.metadata.samplingMetadatas![0].samplingSpaceSize).toBe('1000000');
+      expect(scope.isDone()).toBe(true);
+    });
+
     it('handles auth error', async () => {
       nock(DATA_API_BASE)
         .post('/v1beta/properties/123456:runReport')
